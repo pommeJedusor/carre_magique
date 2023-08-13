@@ -1,15 +1,6 @@
-'''Les règles du carré magique de Merlin :
-   ---------------------------------------
-• Lorsque vous appuyez sur un bouton d'angle (1, 3, 7 ou 9), il inverse les 4 boutons du carré d'angle 2x2 dans lequel il se trouve
-• Lorsque vous appuyez sur un bouton latéral (2, 4, 6 ou 8), il inverse les 3 boutons de cette rangée de bordure
-• Lorsque vous appuyez sur le bouton du milieu (5), il inverse les 5 boutons en forme de "+" du milieu
-• ("Reverse" signifie que s'il est allumé, il s'éteint ; s'il est éteint, il s'allume.)
-• L'état Résolu est lorsque tous les boutons sont allumés sauf celui du milieu (5) ; ceci est montré ci-dessus en bleu'''
-
-import pygame, sys
+import pygame
 import random
 from bot2_0 import bot
-'''from pygame.locals import QUIT'''
 pygame.init()
 
 NB_COL = 3
@@ -21,19 +12,12 @@ TABLE_COULEUR_GAGNANTE = [0, 0, 0, 0, 1, 0, 0, 0, 0]
 
 pygame.display.set_caption('   CARRE MAGIQUE')
 
-screen = pygame.display.set_mode(size=(NB_COL * CELL_SIZE,
-                                       NB_LIGNE * CELL_SIZE))
+screen = pygame.display.set_mode(size=(NB_COL * CELL_SIZE,NB_LIGNE * CELL_SIZE))
 timer = pygame.time.Clock()
-continuer = True
-tableCouleur = []
-tableCoul = []
-tableRectangle = []
-resultats = []
 
 
 def gagner(tableCouleur):
   if tableCouleur == TABLE_COULEUR_GAGNANTE:
-    #print('MAGNIFIQUE : vous avez gagné')
     return True
 
 
@@ -58,63 +42,74 @@ def creaTableIndice(numCarre):
     return [4, 5, 7, 8]
 
 
-def inverser(tableIndice):
+def inverser(numCarre, tableCouleur):
+  #récupère les cases à inverser
+  tableIndice = creaTableIndice(numCarre)
   for i in tableIndice:
     tableCouleur[i] = TABLE_COLOR_INVERSE[tableCouleur[i]]
 
 
 def init():
+  tableCouleur = []
   for i in range(0, NB_COL * NB_LIGNE):
-    indexInit = random.randint(0, 1)
-    tableCouleur.append(indexInit)
+    couleur = random.randint(0, 1)
+    tableCouleur.append(couleur)
   return tableCouleur
 
+def get_squares():
+  squares = []
+  for i in range(0, NB_COL):
+    for j in range(0, NB_LIGNE):
+      square = pygame.Rect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+      squares.append(square)
+  return squares
 
 def showGrid(tableCoul):
   indexCouleur = 0
   for i in range(0, NB_COL):
     for j in range(0, NB_LIGNE):
-      rect1 = pygame.Rect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-      tableRectangle.append(rect1)
-      #pygame.draw.rect(screen, pygame.Color(TABLE_COLOR[index]), rect, width = 5)
-
+      square = pygame.Rect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+      #récupère la couleur du carré
       index = tableCoul[indexCouleur]
-      pygame.draw.rect(screen, pygame.Color(TABLE_COLOR[index]), rect1)
-      pygame.draw.rect(screen, pygame.Color('black'), rect1, width=20)
+      square_color = TABLE_COLOR[index]
+      #couleur du centre du carré
+      pygame.draw.rect(screen, pygame.Color(square_color), square)
+      #contour noir du carré
+      pygame.draw.rect(screen, pygame.Color('black'), square, width=20)
       indexCouleur += 1
 
 
 def carreCliquer(argPos):
-  for i in range(0, len(tableRectangle)):
-    if tableRectangle[i].collidepoint(argPos):
+  squares = get_squares()
+  for i in range(0, len(squares)):
+    if squares[i].collidepoint(argPos):
       return i
 
 
-tableCoul = init()
+continuer = True
+tableCouleur = init()
 while continuer:
   for event in pygame.event.get():
     if event.type == pygame.QUIT:
       continuer = False
 
+    #vérifie si click gauche
     if event.type == pygame.MOUSEBUTTONUP:
       pos = pygame.mouse.get_pos()
-      numBouton = event.button  # 1 = click gauche
+      numBouton = event.button
       if numBouton == 1:
-        caseClick = carreCliquer(pos)
-        tableIndice1 = creaTableIndice(caseClick)
-        inverser(tableIndice1)
-        #gagner(tableCouleur)
+        #inverse en fonction de la case
+        inverser(carreCliquer(pos), tableCouleur)
+        print(len(bot(tableCouleur)))
 
-  screen.fill(pygame.Color("white"))
-  showGrid(tableCoul)
+  #actualise la vue du jeu
+  showGrid(tableCouleur)
   pygame.display.update()
   timer.tick(60)
   if gagner(tableCouleur):
     print('MAGNIFIQUE ! vous avez gagné')
-    continuer = False
+    tableCouleur = init()
     pygame.time.delay(1000)
-  else:
-    print(len(bot(tableCoul)))
+    
 
 pygame.quit()
-#sys.exit()‌
